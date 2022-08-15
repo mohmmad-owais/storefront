@@ -39,10 +39,11 @@ export default class Details extends Component {
 
   render() {
     const productId = this.props.match.params.id;
-
+    console.log("sel", this.state.selectedAtrr);
     return (
       <Query query={GET_PRODUCT} variables={{ id: productId }}>
         {({ loading, error, data }) => {
+          console.log("data", data);
           if (loading) return <p>Loading...</p>;
           if (error) return <p>Error :(</p>;
           const {
@@ -90,9 +91,11 @@ export default class Details extends Component {
                 <ProductConsumer>
                   {(value) => {
                     const inCart = value.cart;
+
                     const findCart = inCart.find(
                       (cartValue) => cartValue.id === id
                     );
+                    console.log("findCart", findCart);
                     const currencies = value.currency;
                     const price = prices.filter(
                       (x) => x.currency.label === currencies.label
@@ -182,7 +185,10 @@ export default class Details extends Component {
 
                         <button
                           className="cart-btn"
-                          disabled={!inStock}
+                          disabled={
+                            !inStock ||
+                            findCart?.selectedAtrr === this.state.selectedAtrr
+                          }
                           onClick={() => {
                             value.addToCart(
                               id,
