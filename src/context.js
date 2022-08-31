@@ -19,7 +19,7 @@ class ProductProvider extends Component {
     });
   };
 
-  addToCart = (id, allProducts, detailPrd, selectedAtrr, cartPrice) => {
+  addToCart = (cartId, id, allProducts, detailPrd, selectedAtrr, cartPrice) => {
     const price = cartPrice;
 
     if (!allProducts) {
@@ -27,8 +27,10 @@ class ProductProvider extends Component {
 
       const newObj = Object.assign(
         {
+          cartId: cartId,
           inCart: true,
           count: 1,
+          price: price.amount,
           total: price.amount,
           symbol: price.symbol,
           selectedAtrr: selectedAtrr,
@@ -49,10 +51,13 @@ class ProductProvider extends Component {
 
       const newObj = Object.assign(
         {
+          cartId: cartId,
           inCart: true,
           count: 1,
+          price: price.amount,
           total: price.amount,
           symbol: price.symbol,
+          selectedAtrr: selectedAtrr,
         },
         product
       );
@@ -80,7 +85,7 @@ class ProductProvider extends Component {
 
   increment = (id) => {
     let tempCart = [...this.state.cart];
-    const selectedProduct = tempCart.find((item) => item.id === id);
+    const selectedProduct = tempCart.find((item) => item.cartId === id);
     const index = tempCart.indexOf(selectedProduct);
     const product = tempCart[index];
     product.count = product.count + 1;
@@ -98,7 +103,7 @@ class ProductProvider extends Component {
 
   decrement = (id) => {
     let tempCart = [...this.state.cart];
-    const selectedProduct = tempCart.find((item) => item.id === id);
+    const selectedProduct = tempCart.find((item) => item.cartId === id);
     const index = tempCart.indexOf(selectedProduct);
     const product = tempCart[index];
 
@@ -121,7 +126,7 @@ class ProductProvider extends Component {
   removeItem = (id) => {
     let tempCart = [...this.state.cart];
 
-    tempCart = tempCart.filter((item) => item.id !== id);
+    tempCart = tempCart.filter((item) => item.cartId !== id);
 
     let removedProduct = tempCart;
     removedProduct.inCart = false;

@@ -66,40 +66,77 @@ export default class Modal extends Component {
                           <span className="cart-headings mt-20">
                             <p>{item.name}</p>
                             <p>{item.brand}</p>
-                            <h4>${parseFloat(item.total).toFixed(2)}</h4>
-                            <span className="">
-                              <strong>
-                                <small>{item?.attributes[0]?.name}</small>
-                              </strong>
-                            </span>
-                            <div className="btn-container">
-                              {item?.attributes?.length === 0 ? (
-                                ""
+                            <h4>
+                              {" "}
+                              {value.currency.symbol}
+                              {parseFloat(item.price).toFixed(2)}
+                            </h4>
+                            {item.attributes.map((atrribute) =>
+                              atrribute.name === "Color" ? (
+                                <>
+                                  <span className="mt-20">
+                                    <strong>
+                                      <small>{atrribute.name + ":"}</small>
+                                    </strong>
+                                  </span>
+                                  <div className="box-container">
+                                    {atrribute.items.map((attr) => (
+                                      <span
+                                        className="colorboxitem"
+                                        style={{
+                                          border:
+                                            item.selectedAtrr[
+                                              atrribute.name
+                                            ] === attr.value
+                                              ? "1px solid #5ECE7B"
+                                              : "0",
+                                        }}
+                                      >
+                                        <ColorBtn
+                                          disabled
+                                          bg={attr.value}
+                                        ></ColorBtn>
+                                      </span>
+                                    ))}
+                                  </div>
+                                </>
                               ) : (
                                 <>
-                                  {item.attributes[0].name === "Color" ? (
-                                    <ColorBtn
-                                      disabled
-                                      selectedAtrr={item.selectedAtrr}
-                                    ></ColorBtn>
-                                  ) : (
-                                    <div className="btn-container">
-                                      {item.attributes[0].items.map((attr) => (
+                                  <span>
+                                    <strong>
+                                      <small>{atrribute.name + ":"}</small>
+                                    </strong>
+                                  </span>
+                                  <div className="box-wrapper">
+                                    {atrribute.items.map((attr) => {
+                                      return (
                                         <AttrBtn
+                                          value={attr.value}
                                           disabled
-                                          selectedAtrr={
-                                            item.selectedAtrr === attr.value
-                                          }
-                                          value={item.selectedAtrr}
+                                          length={attr.value.length}
+                                          style={{
+                                            backgroundColor:
+                                              item.selectedAtrr[
+                                                atrribute.name
+                                              ] === attr.value
+                                                ? "#1D1F22"
+                                                : "white",
+                                            color:
+                                              item.selectedAtrr[
+                                                atrribute.name
+                                              ] === attr.value
+                                                ? "white"
+                                                : "black",
+                                          }}
                                         >
                                           {attr.value}
                                         </AttrBtn>
-                                      ))}
-                                    </div>
-                                  )}
+                                      );
+                                    })}
+                                  </div>
                                 </>
-                              )}
-                            </div>
+                              )
+                            )}
                           </span>
 
                           <span>
@@ -108,7 +145,7 @@ export default class Modal extends Component {
                                 <button
                                   className="qty-adjust-btn"
                                   onClick={() => {
-                                    return value.increment(item.id);
+                                    return value.increment(item.cartId);
                                   }}
                                 >
                                   +
@@ -122,7 +159,7 @@ export default class Modal extends Component {
                                 <button
                                   className="qty-adjust-btn"
                                   onClick={() => {
-                                    return value.decrement(item.id);
+                                    return value.decrement(item.cartId);
                                   }}
                                 >
                                   -
@@ -143,7 +180,10 @@ export default class Modal extends Component {
 
                       <div className="modalTotal">
                         <h4>Total</h4>
-                        <h4>${parseFloat(value.cartTotal).toFixed(2)} </h4>
+                        <h4>
+                          {value.currency.symbol}
+                          {parseFloat(value.cartTotal).toFixed(2)}{" "}
+                        </h4>
                       </div>
                       <span className="footerBtn">
                         <Link to="/cart">
@@ -183,7 +223,7 @@ const ModalContainer = styled.div`
   background: rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
-  justify-content: center;
+
   #modal {
     background: var(--mainWhite);
   }
@@ -201,7 +241,7 @@ const ModalContainer = styled.div`
     position: fixed;
     width: 325px;
     height: 400px;
-    left: 980px;
+    right: 20px;
     top: 78px;
   }
 
@@ -272,6 +312,12 @@ const ModalContainer = styled.div`
     height: 190px;
     object-fit: contain;
   }
+
+  .colorboxitem {
+    border: 1px solid red;
+    padding: 8px 2px 0px 2px;
+    margin-right: 2px;
+  }
 `;
 
 const CartBtn = styled.button`
@@ -298,12 +344,11 @@ const BagBtn = styled.button`
 `;
 
 const AttrBtn = styled.button`
-  width: 24px;
+  width: ${(props) => (props.length >= 3 ? "40px" : "26px")};
   height: 24px;
   text-align: center;
   cursor: pointer;
-  margin-top: 5px;
-  font-size: 12px;
+  font-size: 11px;
   margin-top: 5px;
   margin-left: 5px;
   color: ${(props) => (props.selectedAtrr ? "white" : "black")};
@@ -316,6 +361,7 @@ const ColorBtn = styled.button`
   height: 24px;
   justify-content: center;
   cursor: pointer;
-  background-color: ${(props) => props.selectedAtrr};
+  margin-top: 2px;
+  background-color: ${(props) => props.bg};
   border: 0;
 `;

@@ -13,6 +13,9 @@ export default class AddCart extends Component {
         <ProductConsumer>
           {(value) => {
             const { cart, currency } = value;
+            const quantity = cart
+              .map((x) => x?.count)
+              .reduce((a, b) => a + b, 0);
 
             let cartImg = cart.map((item) => item.gallery);
 
@@ -33,7 +36,7 @@ export default class AddCart extends Component {
                     </div>
                     <div className="mb-10 ">
                       <span className="totalText">Quantity: </span>
-                      <strong> {cart.length}</strong>
+                      <strong> {quantity}</strong>
                     </div>
                     <div className="mb-10 ">
                       <span className="totalText">

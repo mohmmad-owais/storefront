@@ -7,25 +7,14 @@ import { GET_PRODUCTS } from "../gql/queries";
 import { Query } from "@apollo/react-components";
 
 export default class ProductList extends Component {
-  state = {
-    route: "all",
-  };
-
-  componentDidMount() {
-    const routeFound = this.props.routeName;
-    if (routeFound) {
-      this.setState(() => {
-        return { route: routeFound };
-      });
-    }
-  }
-
   render() {
+    const routeName = this.props.location.pathname.substring(1);
+
     return (
       <>
         <Query
           query={GET_PRODUCTS}
-          variables={{ input: { title: this.state.route } }}
+          variables={{ input: { title: routeName || "all" } }}
         >
           {({ loading, error, data }) => {
             if (loading) return <p>Loading...</p>;

@@ -7,8 +7,6 @@ import Details from "./components/Details";
 import Defaults from "./components/Defaults";
 import Modal from "./components/Modal";
 import AddCart from "./components/AddCart";
-import Clothes from "./components/Clothes";
-import Tech from "./components/Tech";
 
 export default class App extends Component {
   render() {
@@ -21,8 +19,8 @@ export default class App extends Component {
             <Route exact path="/" component={ProductList} />
             <Route path="/details/:id" component={Details} />
             <Route path="/cart" component={AddCart} />
-            <Route path="/clothes" component={Clothes} />
-            <Route path="/tech" component={Tech} />
+            <Route path="/clothes" component={ProductList} />
+            <Route path="/tech" component={ProductList} />
 
             <Route component={Defaults} />
           </Switch>

@@ -9,7 +9,7 @@ export default class CartItems extends Component {
     this.state = {
       cartImg: { img: "", id: "" },
       count: 0,
-      prdId: 0,
+      cartId: 0,
       currentIndex: 0,
     };
 
@@ -46,45 +46,70 @@ export default class CartItems extends Component {
 
                 <p className="mt-10">
                   {value.currency.symbol}
-                  {parseFloat(item.total).toFixed(2)}
+                  {parseFloat(item.price).toFixed(2)}
                 </p>
-
-                {item?.attributes?.length === 0 ? (
-                  ""
-                ) : (
-                  <>
-                    <span className="mt-10">
-                      <strong>
-                        <small>{item.attributes[0].name}:</small>
-                      </strong>
-                    </span>
-                    {item.attributes[0].name === "Color" ? (
-                      <ColorBtn
-                        disabled
-                        selectedAtrr={item.selectedAtrr}
-                      ></ColorBtn>
-                    ) : (
-                      <div className="btn-container">
-                        {item.attributes[0].items.map((attr) => (
-                          <AttrBtn
-                            disabled
-                            selectedAtrr={item.selectedAtrr === attr.value}
-                            value={item.selectedAtrr}
+                {item.attributes.map((atrribute) =>
+                  atrribute.name === "Color" ? (
+                    <>
+                      <span className="mt-40">
+                        <strong>{atrribute.name + ":"}</strong>
+                      </span>
+                      <div className="box-wrapper">
+                        {atrribute.items.map((attr) => (
+                          <span
+                            className="colorboxitem"
+                            style={{
+                              border:
+                                item.selectedAtrr[atrribute.name] === attr.value
+                                  ? "1px solid #5ECE7B"
+                                  : "0",
+                            }}
                           >
-                            {attr.value}
-                          </AttrBtn>
+                            <ColorBtn disabled bg={attr.value}></ColorBtn>
+                          </span>
                         ))}
                       </div>
-                    )}
-                  </>
+                    </>
+                  ) : (
+                    <>
+                      <span className="mt-40">
+                        <strong>{atrribute.name + ":"}</strong>
+                      </span>
+                      <div className="box-wrapper">
+                        {atrribute.items.map((attr) => {
+                          return (
+                            <AttrBtn
+                              className="attribute-box"
+                              value={attr.value}
+                              disabled
+                              style={{
+                                backgroundColor:
+                                  item.selectedAtrr[atrribute.name] ===
+                                  attr.value
+                                    ? "#1D1F22"
+                                    : "white",
+                                color:
+                                  item.selectedAtrr[atrribute.name] ===
+                                  attr.value
+                                    ? "white"
+                                    : "black",
+                              }}
+                            >
+                              {attr.value}
+                            </AttrBtn>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )
                 )}
-              </div>
+                </div>
               <div className="cartItemValues">
                 <span className="change-values mt-10">
                   <button
                     className="qty-adjust-btn"
                     onClick={() => {
-                      return value.increment(item.id);
+                      return value.increment(item.cartId);
                     }}
                   >
                     +
@@ -95,7 +120,7 @@ export default class CartItems extends Component {
                   <button
                     className="qty-adjust-btn"
                     onClick={() => {
-                      return value.decrement(item.id);
+                      return value.decrement(item.cartId);
                     }}
                   >
                     -
@@ -108,13 +133,13 @@ export default class CartItems extends Component {
                     src={
                       this.state.cartImg?.img === ""
                         ? item.gallery[0]
-                        : item.id === this.state.cartImg?.id
+                        : item.cartId === this.state.cartImg?.id
                         ? this.state.cartImg?.img
                         : item.gallery[0]
                     }
                     alt="cart-img"
                   />
-                  {item?.attributes?.length === 0 ? (
+                  {item?.gallery.length === 1 ? (
                     ""
                   ) : (
                     <>
@@ -129,7 +154,7 @@ export default class CartItems extends Component {
                           this.setState((prevState) => ({
                             cartImg: {
                               img: item.gallery[this.state.currentIndex],
-                              id: item.id,
+                              id: item.cartId,
                             },
                           }));
                         }}
@@ -154,10 +179,10 @@ export default class CartItems extends Component {
                         disabled={this.state.currentIndex === 0}
                         onClick={() => {
                           this.goToPrevSlide();
-                          this.setState((prevState) => ({
+                          this.setState(() => ({
                             cartImg: {
                               img: item.gallery[this.state.currentIndex],
-                              id: item.id,
+                              id: item.cartId,
                             },
                           }));
                         }}
@@ -267,13 +292,18 @@ const CartItemSection = styled.div`
     width: 24px;
     height: 24px;
   }
+
+  .colorboxitem {
+    border: 1px solid red;
+    padding: 16px 2px 0px 2px;
+    margin-right: 5px;
+  }
 `;
 
 const AttrBtn = styled.button`
   width: 63px;
   height: 45px;
   justify-content: center;
-  cursor: pointer;
   margin-top: 5px;
   margin-left: 5px;
   font-size: 14px;
@@ -284,8 +314,8 @@ const AttrBtn = styled.button`
 const ColorBtn = styled.button`
   width: 32px;
   height: 32px;
-  justify-content: center;
-  cursor: pointer;
-  background-color: ${(props) => props.selectedAtrr};
   border: 0;
+  margin-top: 5px;
+  justify-content: center;
+  background-color: ${(props) => props.bg};
 `;

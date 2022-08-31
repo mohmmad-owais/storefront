@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { NavLink } from "react-router-dom";
 import logo from "../img/a-logo.png";
-import { GET_PRODUCTS } from "../gql/queries";
+import { GET_PRODUCTS, GET_CATEGORIES } from "../gql/queries";
 import styled from "styled-components";
 import { ButtonContainer } from "./Button";
 import { ProductConsumer } from "../context";
@@ -16,21 +16,31 @@ export default class Nav extends Component {
       isOpen: false,
       selectedOption: {},
       currencies: "",
+      categories: [],
     };
 
     // Binding this keyword
     this.toggling = this.toggling.bind(this);
     this.setCurrency = this.setCurrency.bind(this);
+    this.handleOutsideClick = this.handleOutsideClick.bind(this);
   }
 
   componentDidMount() {
     this.setCurrency();
   }
-  toggling = () =>
-    this.setState((prevState) => {
+  toggling = () => {
+    if (!this.state.isOpen) {
+      document.addEventListener("click", this.handleOutsideClick, false);
+    } else {
+      document.removeEventListener("click", this.handleOutsideClick, false);
+    }
+    this.setState(() => {
       return { isOpen: !this.state.isOpen };
     });
-
+  };
+  handleOutsideClick = (e) => {
+    if (!this.node.contains(e.target)) this.toggling();
+  };
   setCurrency = () => {
     const client = new ApolloClient({
       uri: "http://localhost:4000",
@@ -43,17 +53,29 @@ export default class Nav extends Component {
       })
       .then((res) => {
         this.setState(() => {
-          const currencies = res.data.category.products[0].prices.map(
+          const currencies = res?.data?.category.products[0].prices.map(
             (item) => item.currency
           );
           return { currencies: currencies };
+        });
+      });
+    client
+      .query({
+        query: GET_CATEGORIES,
+      })
+      .then((response) => {
+        this.setState(() => {
+          const categoriesData = response?.data?.categories.map(
+            (item) => item.name
+          );
+          return { categories: categoriesData };
         });
       });
   };
 
   render() {
     return (
-      <NavBar className="">
+      <NavBar>
         <ul className="nav-items">
           <li className="nav-links">
             <NavLink
@@ -63,26 +85,26 @@ export default class Nav extends Component {
               }
               to="/"
             >
-              all
+              {this.state.categories[0]}
             </NavLink>
           </li>
           <li className="nav-links">
             <NavLink
               strict
-              to="/clothes"
+              to={`/${this.state.categories[1]}`}
               className={(isActive) => (isActive ? "active-link" : "nav-links")}
             >
-              clothes
+              {this.state.categories[1]}
             </NavLink>
           </li>
           <li className="nav-links">
             <NavLink
-              to="/tech"
+              to={`/${this.state.categories[2]}`}
               className={(isActive) =>
                 isActive ? " active-link" : "nav-links"
               }
             >
-              tech
+              {this.state.categories[2]}
             </NavLink>
           </li>
         </ul>
@@ -93,7 +115,12 @@ export default class Nav extends Component {
           {(value) => {
             return (
               <>
-                <div>
+                <div
+                  ref={(node) => {
+                    this.node = node;
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <DropDownContainer>
                     <DropDownHeader onClick={this.toggling}>
                       {value.currency.symbol || "$"}
@@ -263,9 +290,9 @@ const DropDownListContainer = styled("div")`
 `;
 
 const DropDownList = styled("ul")`
-  padding: 0;
+  padding: 0px;
   margin: 0;
-  text-align: center;
+  text-align: start;
   box-shadow: 0 2px 3px rgba(0, 0.1, 0.1, 0.15);
   background: #ffffff;
   border: 2px solid #e5e5e5;
@@ -280,8 +307,12 @@ const DropDownList = styled("ul")`
 
 const ListItem = styled("li")`
   list-style: none;
-  padding: ${(props) => (props.selected ? "10px 0 10px 0" : "0")};
+  padding: 5px 0px 5px 10px;
   cursor: pointer;
+  margin-bottom: 0.2rem;
   background: ${(props) => (props.selected ? "#EEEEEE" : "")};
-  margin-bottom: 0.8em;
+
+  :hover {
+    background: #eeeeee;
+  }
 `;

@@ -1,6 +1,5 @@
 import React, { Component } from "react";
-
-import { Query } from "@apollo/react-components";
+import * as DOMPurify from "dompurify";
 import { GET_PRODUCT } from "../gql/queries";
 import styled from "styled-components";
 import { ApolloClient, InMemoryCache } from "@apollo/client";
@@ -8,8 +7,10 @@ import { ProductConsumer } from "../context";
 
 export default class Details extends Component {
   state = {
+    data: "",
     selectedImg: "",
-    selectedAtrr: "",
+    selectedAtrr: {},
+    loading: true,
   };
 
   componentDidMount() {
@@ -30,193 +31,253 @@ export default class Details extends Component {
       .then((res) => {
         this.setState(() => {
           return {
+            data: res.data.product,
             selectedImg: res.data.product.gallery[0],
-            selectedAtrr: res.data?.product?.attributes[0]?.items[0]?.value,
+            loading: false,
           };
         });
       });
   };
 
   render() {
-    const productId = this.props.match.params.id;
-    console.log("sel", this.state.selectedAtrr);
+    const {
+      id,
+      name,
+      brand,
+      description,
+      gallery,
+      attributes,
+      prices,
+      inStock,
+    } = this.state.data;
+    const cartId = Math.floor(Math.random() * 100 * new Date());
+    let attributeArray = this.state.selectedAtrr;
+
+    if (this.state.loading) return <p>Loading...</p>;
     return (
-      <Query query={GET_PRODUCT} variables={{ id: productId }}>
-        {({ loading, error, data }) => {
-          console.log("data", data);
-          if (loading) return <p>Loading...</p>;
-          if (error) return <p>Error :(</p>;
-          const {
-            id,
-            name,
-            brand,
-            description,
-            gallery,
-            attributes,
-            prices,
-            inStock,
-          } = data?.product;
-
-          return (
-            <div className="container">
-              <DetailSection>
-                <div className="img-container">
-                  <div className="vertical-pictures">
-                    {gallery.map((item, index) => (
-                      <span key={index}>
-                        <img
-                          key={index}
-                          src={item}
-                          onClick={() =>
-                            this.setState(() => {
-                              return { selectedImg: item };
-                            })
-                          }
-                          className="img-box"
-                          alt="gallery-img"
-                        />
-                      </span>
-                    ))}
-                  </div>
-
-                  <span className="selected-img-container">
+      <div>
+        <div className="container">
+          <DetailSection>
+            <div className="img-container">
+              <div className="vertical-pictures">
+                {gallery.map((item, index) => (
+                  <span key={index}>
                     <img
-                      className="selectedImg"
-                      src={this.state.selectedImg}
-                      alt="selectedimg"
+                      key={index}
+                      src={item}
+                      onClick={() =>
+                        this.setState(() => {
+                          return { selectedImg: item };
+                        })
+                      }
+                      className="img-box"
+                      alt="gallery-img"
                     />
                   </span>
-                </div>
+                ))}
+              </div>
 
-                <ProductConsumer>
-                  {(value) => {
-                    const inCart = value.cart;
+              <span className="selected-img-container">
+                <img
+                  className="selectedImg"
+                  src={this.state.selectedImg}
+                  alt="selectedimg"
+                />
+              </span>
+            </div>
 
-                    const findCart = inCart.find(
-                      (cartValue) => cartValue.id === id
-                    );
-                    console.log("findCart", findCart);
-                    const currencies = value.currency;
-                    const price = prices.filter(
-                      (x) => x.currency.label === currencies.label
-                    );
+            <ProductConsumer>
+              {(value) => {
+                const currencies = value.currency;
+                const price = prices.filter(
+                  (x) => x.currency.label === currencies.label
+                );
 
-                    const cartPrice = {
-                      symbol: currencies.symbol,
-                      amount: price[0]?.amount,
-                    };
+                const cartPrice = {
+                  symbol: currencies.symbol,
+                  amount: price[0]?.amount,
+                };
+                const cart = value.cart;
 
-                    return (
-                      <div className="product-details">
-                        <h2>{name}</h2>
-                        <span>{brand}</span>
+                const index = cart?.findIndex(
+                  (item) => item?.selectedAtrr === attributeArray
+                );
 
-                        {attributes[0]?.name === "Color" ? (
-                          <>
-                            <span className="mt-40">
-                              <strong>{attributes[0]?.name + ":"}</strong>
-                            </span>
-                            <div className="box-wrapper">
-                              {attributes[0]?.items.map((attr) => {
-                                return (
+                return (
+                  <div className="product-details">
+                    <h2>{name}</h2>
+                    <span>{brand}</span>
+                    {attributes.map((atrribute) =>
+                      atrribute.name === "Color" ? (
+                        <>
+                          <span className="mt-40">
+                            <strong>{atrribute.name + ":"}</strong>
+                          </span>
+                          <div className="box-wrapper">
+                            {atrribute.items.map((attr) => {
+                              return (
+                                <span
+                                  className="colorboxitem"
+                                  style={{
+                                    border:
+                                      attributeArray[atrribute.name] ===
+                                      attr.value
+                                        ? "1px solid #5ECE7B"
+                                        : "0",
+                                  }}
+                                >
                                   <button
                                     className="color-box"
                                     value={attr.value}
-                                    onClick={(e) =>
-                                      this.setState(() => {
-                                        return { selectedAtrr: e.target.value };
-                                      })
-                                    }
+                                    onClick={(e) => {
+                                      return this.setState((prevState) => {
+                                        return {
+                                          selectedAtrr: {
+                                            ...prevState.selectedAtrr,
+
+                                            [atrribute.name]: e.target.value,
+                                          },
+                                        };
+                                      });
+                                    }}
                                     style={{
                                       backgroundColor: attr.value,
                                     }}
                                   ></button>
-                                );
-                              })}
-                            </div>
-                          </>
-                        ) : (
-                          attributes[0] && (
-                            <>
-                              <span className="mt-40">
-                                <strong>{attributes[0]?.name + ":"}</strong>
-                              </span>
-                              <div className="box-wrapper">
-                                {attributes[0]?.items.map((attr) => {
-                                  return (
-                                    <button
-                                      className="attribute-box"
-                                      value={attr.value}
-                                      onClick={(e) =>
-                                        this.setState(() => {
-                                          return {
-                                            selectedAtrr: e.target.value,
-                                          };
-                                        })
-                                      }
-                                      style={{
-                                        backgroundColor:
-                                          this.state.selectedAtrr === attr.value
-                                            ? "#1D1F22"
-                                            : "white",
-                                        color:
-                                          this.state.selectedAtrr === attr.value
-                                            ? "white"
-                                            : "black",
-                                      }}
-                                    >
-                                      {attr.value}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </>
-                          )
-                        )}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <span className="mt-40">
+                            <strong>{atrribute.name + ":"}</strong>
+                          </span>
+                          <div className="box-wrapper">
+                            {atrribute.items.map((attr) => {
+                              return (
+                                <button
+                                  className="attribute-box"
+                                  value={attr.value}
+                                  onClick={(e) => {
+                                    return this.setState((prevState) => {
+                                      return {
+                                        selectedAtrr: {
+                                          ...prevState.selectedAtrr,
 
-                        <span className="mt-40">
-                          <strong>{prices[0]?.__typename}:</strong>
-                        </span>
-                        <span className="mt-10" style={{ fontSize: 24 }}>
-                          <strong>
-                            {currencies.symbol} {price[0]?.amount}{" "}
-                          </strong>
-                        </span>
+                                          [atrribute.name]: e.target.value,
+                                        },
+                                      };
+                                    });
+                                  }}
+                                  style={{
+                                    backgroundColor:
+                                      attributeArray[atrribute.name] ===
+                                      attr.value
+                                        ? "#1D1F22"
+                                        : "white",
+                                    color:
+                                      attributeArray[atrribute.name] ===
+                                      attr.value
+                                        ? "white"
+                                        : "black",
+                                  }}
+                                >
+                                  {attr.value}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )
+                    )}
 
-                        <button
-                          className="cart-btn"
-                          disabled={
-                            !inStock ||
-                            findCart?.selectedAtrr === this.state.selectedAtrr
+                    <span className="mt-40">
+                      <strong>{prices[0]?.__typename}:</strong>
+                    </span>
+                    <span className="mt-10" style={{ fontSize: 24 }}>
+                      <strong>
+                        {currencies.symbol} {price[0]?.amount}{" "}
+                      </strong>
+                    </span>
+
+                    <button
+                      className="cart-btn"
+                      disabled={
+                        !inStock ||
+                        Object.values(attributeArray).length !==
+                          attributes.length
+                      }
+                      onClick={() => {
+                        const findCart = cart.find((x) => x?.id === id);
+
+                        if (cart.length !== 0) {
+                          let cartObj = cart[index]?.selectedAtrr;
+
+                          const match =
+                            JSON.stringify(cartObj) ===
+                            JSON.stringify(attributeArray);
+
+                          if (match === true) {
+                            return value.increment(cartId);
+                          } else if (
+                            findCart?.id === id &&
+                            findCart.selectedAtrr === ""
+                          ) {
+                            return value.increment(findCart.cartId);
                           }
-                          onClick={() => {
+
+                          if (match === false) {
                             value.addToCart(
+                              cartId,
                               id,
                               "",
-                              data?.product,
+                              this.state.data,
                               this.state.selectedAtrr,
                               cartPrice
                             );
-                          }}
-                        >
-                          {!inStock ? "Out of stock" : "Add to cart"}
-                        </button>
-
-                        <div
-                          className="mt-40"
-                          dangerouslySetInnerHTML={{
-                            __html: description,
-                          }}
-                        ></div>
-                      </div>
-                    );
-                  }}
-                </ProductConsumer>
-              </DetailSection>
-            </div>
-          );
-        }}
-      </Query>
+                            console.log("match", match);
+                          }
+                        } else {
+                          value.addToCart(
+                            cartId,
+                            id,
+                            "",
+                            this.state.data,
+                            this.state.selectedAtrr,
+                            cartPrice
+                          );
+                        }
+                      }}
+                    >
+                      {!inStock ? "Out of stock" : "Add to cart"}
+                    </button>
+                    {Object.values(attributeArray).length !==
+                      attributes.length && (
+                      <p
+                        style={{
+                          marginTop: 10,
+                          fontSize: 12,
+                          color: "red",
+                        }}
+                      >
+                        Please Select Attributes !
+                      </p>
+                    )}
+                    <div
+                      className="mt-20"
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(description),
+                      }}
+                    />
+                  </div>
+                );
+              }}
+            </ProductConsumer>
+          </DetailSection>
+        </div>
+      </div>
     );
   }
 }
@@ -287,7 +348,6 @@ const DetailSection = styled.div`
     width: 32px;
     height: 32px;
     justify-content: center;
-    margin-left: 5px;
     cursor: pointer;
     font-size: 16px;
     border: 0;
@@ -303,5 +363,11 @@ const DetailSection = styled.div`
     margin-top: 30px;
     text-transform: uppercase;
     background-color: var(--mainGreen);
+  }
+
+  .colorboxitem {
+    border: 1px solid red;
+    padding: 4px 2px 0px 2px;
+    margin-right: 5px;
   }
 `;

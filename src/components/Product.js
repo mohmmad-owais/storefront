@@ -6,7 +6,7 @@ import { ProductConsumer } from "../context";
 export default class Product extends Component {
   render() {
     const allProducts = this.props.data;
-
+    const cartId = Math.floor(Math.random() * 100 * new Date());
     const history = this.props.options.history;
 
     return (
@@ -14,10 +14,6 @@ export default class Product extends Component {
         <ProductConsumer>
           {(value) =>
             allProducts.map((item) => {
-              const inCart = value.cart;
-              const findCart = inCart.find(
-                (cartValue) => cartValue.id === item.id
-              );
               const currencies = value.currency;
               const prices = item.prices.filter(
                 (x) => x.currency.label === currencies.label
@@ -26,7 +22,7 @@ export default class Product extends Component {
                 symbol: currencies.symbol,
                 amount: prices[0]?.amount,
               };
-
+              console.log("cart prd", value.cart);
               return (
                 <Item key={item.id}>
                   <ProductWrapper inStock={!item.inStock}>
@@ -54,6 +50,7 @@ export default class Product extends Component {
                                 return history.push(`/details/${item.id}`);
                               } else {
                                 return value.addToCart(
+                                  cartId,
                                   item.id,
                                   allProducts,
                                   "",
@@ -77,7 +74,9 @@ export default class Product extends Component {
                         )}
                       </div>
                       <div className="textDetails">
-                        <span className="mt-20 mb-10">{item.name}</span>
+                        <span className="mt-20 mb-10">
+                          {item.name} {item?.brand}
+                        </span>
                         <p>
                           <strong>
                             {currencies.symbol} {prices[0]?.amount}
